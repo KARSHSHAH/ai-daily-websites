@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elysian | The Celestial Gala - Exclusive Invitation</title>
+    <meta name="description" content="You are cordially invited to Elysian: The Celestial Gala. An extraordinary evening of immersive art, gastronomy, and music under the stars. RSVP now.">
+    
+    <!-- Open Graph SEO -->
+    <meta property="og:title" content="Elysian | The Celestial Gala">
+    <meta property="og:description" content="An extraordinary evening under the stars. Interactive 3D invitation experience.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?q=80&w=1200&auto=format&fit=crop">
+    <meta property="og:type" content="website">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- GSAP (GreenSock) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Lenis Smooth Scroll -->
+    <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/lenis@1.1.18/dist/lenis.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Cinzel', 'serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            50: '#FDFBF7',
+                            100: '#F6EEDB',
+                            200: '#ECC98C',
+                            300: '#E0A951',
+                            400: '#D48C2B',
+                            500: '#C2761B',
+                            light: '#E6C687',
+                            dark: '#9A7032',
+                        },
+                        obsidian: '#090A0F',
+                        space: '#121420',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html.lenis, html.lenis body {
+            height: auto;
+        }
+
+        .lenis.lenis-smooth {
+            scroll-behavior: auto !important;
+        }
+
+        body {
+            background-color: #090A0F;
+            overflow-x: hidden;
+            perspective: 1500px;
+        }
+
+        /* 3D Envelope CSS */
+        .envelope-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 580px;
+            height: 380px;
+            perspective: 1500px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .envelope {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #16192b;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 
+                        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Flaps */
+        .envelope::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(26,29,49,1) 0%, rgba(18,20,32,1) 100%);
+            clip-path: polygon(0 0, 50% 50%, 100% 0, 100% 100%, 0 100%);
+            border-radius: 0 0 12px 12px;
+            z-index: 3;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 52%;
+            background: #1c2035;
+            clip-path: polygon(0 0, 50% 100%, 100% 0);
+            transform-origin: top;
+            z-index: 4;
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), z-index 0.3s;
+            border-radius: 4px 4px 0 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Letter Inside */
+        .letter {
+            position: absolute;
+            bottom: 10px;
+            left: 5%;
+            width: 90%;
+            height: 95%;
+            background: linear-gradient(145deg, #fbfaf7 0%, #eae5d9 100%);
+            border-radius: 8px;
+            padding: 32px;
+            box-sizing: border-box;
+            z-index: 2;
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), bottom 0.6s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        /* Opened State Styles managed by JS Class */
+        .envelope-wrapper.open .flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        .envelope-wrapper.open .letter {
+            transform: translateY(-55%) translateZ(100px) scale(1.03);
+            z-index: 5;
+            bottom: 80px;
+        }
+
+        /* Custom scrollbar for premium touch */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090A0F;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #9A7032;
+            border-radius: 3px;
+        }
+
+        /* Ambient glowing backgrounds */
+        .glow-orb {
+            filter: blur(140px);
+            opacity: 0.22;
+            mix-blend-mode: screen;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="font-sans text-stone-200 antialiased min-h-screen relative selection:bg-gold-light selection:text-obsidian">
+
+    <!-- Ambient Grid & Orbs -->
+    <div class="fixed inset-0 bg-[linear-gradient(to_right,#1f293710_1px,transparent_1px),linear-gradient(to_bottom,#1f293710_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none z-0"></div>
+    <div class="glow-orb fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900 z-0"></div>
+    <div class="glow-orb fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-gold-dark z-0"></div>
+
+    <!-- STARFIELD BG -->
+    <canvas id="starsCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+    <!-- MAIN SCENE CONTAINER -->
+    <main class="relative min-h-screen flex flex-col justify-between items-center px-4 py-8 z-10">
+        
+        <!-- Header / Logo -->
+        <header class="w-full max-w-6xl flex justify-between items-center py-4 mb-8 z-20" id="header">
+            <div class="flex items-center gap-3">
+                <i data-lucide="sparkles" class="w-5 h-5 text-gold-light"></i>
+                <span class="font-serif text-2xl tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-gold-100 via-gold-light to-gold-200 font-bold">ELYSIAN</span>
+            </div>
+            <div class="h-[1px] flex-grow bg-gradient-to-r from-transparent via-gold-dark/30 to-transparent mx-6 hidden md:block"></div>
+            <div class="flex items-center gap-2 font-serif text-xs tracking-[0.4em] text-gold-light/80 uppercase">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-gold-light"></i>
+                <span>OCTOBER 24 • PARIS</span>
+            </div>
+        </header>
+
+        <!-- INTRO & ENVELOPE SECTION -->
+        <section id="interactive-invite-section" class="flex-grow flex flex-col items-center justify-center w-full max-w-lg mb-12 text-center relative z-20">
+            
+            <div id="intro-text" class="mb-10 space-y-3">
+                <span class="text-xs uppercase tracking-[0.5em] text-gold-light font-semibold block flex items-center justify-center gap-2">
+                    <i data-lucide="crown" class="w-3.5 h-3.5"></i> A Personal Invitation
+                </span>
+                <h1 class="font-serif text-3xl md:text-5xl text-stone-100 tracking-wide font-bold">Unveil the Extraordinary</h1>
+                <p class="text-stone-400 text-sm md:text-base max-w-sm mx-auto font-light leading-relaxed">Touch the golden wax seal of your physical digital invite to unveil the celestial experience.</p>
+            </div>
+
+            <!-- Envelope Component -->
+            <div class="envelope-wrapper" id="invite-envelope">
+                <!-- Flap -->
+                <div class="flap"></div>
+                
+                <!-- Main Envelope Body -->
+                <div class="envelope flex items-center justify-center">
+                    <!-- Wax Seal -->
+                    <div id="wax-seal" class="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 cursor-pointer transition-transform duration-500 hover:scale-110 active:scale-95">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-gold-200 via-gold-300 to-gold-dark flex items-center justify-center shadow-2xl relative">
+                            <span class="font-serif text-2xl text-obsidian font-bold">E</span>
+                            <!-- Outer decorative ring -->
+                            <div class="absolute inset-1 border-2 border-dashed border-gold-dark/40 rounded-full animate-[spin_20s_linear_infinite]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Letter Card -->
+                <div class="letter flex flex-col justify-between text-obsidian text-left border border-gold-100/50 shadow-2xl">
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-start border-b border-stone-300/60 pb-2">
+                            <span class="font-serif text-[10px] tracking-[0.2em] uppercase text-stone-500 flex items-center gap-1">
+                                <i data-lucide="ticket" class="w-3 h-3"></i> Admit One
+                            </span>
+                            <span class="font-serif text-[10px] tracking-[0.2em] uppercase text-stone-500">No. 0087 / 1000</span>
+                        </div>
+                        <p class="font-serif text-xs tracking-[0.2em] text-gold-dark uppercase font-semibold">The Board requests your presence</p>
+                        <h2 class="font-serif text-xl md:text-2xl text-stone-900 font-bold leading-tight">The Elysian Celestial Gala</h2>
+                        <p class="text-[11px] text-stone-600 leading-relaxed font-light">An immersive synthesis of light, holographic art, and molecular culinary curation under the stars.</p>
+                    </div>
+
+                    <div class="space-y-3 pt-3 border-t border-stone-300/60">
+                        <div class="flex justify-between text-[11px] uppercase tracking-wider text-stone-700">
+                            <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3 text-gold-dark"></i> Oct 24, 2025</span>
+                            <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3 text-gold-dark"></i> 19:00 CET</span>
+                        </div>
+                        <button id="view-details-btn" class="w-full bg-obsidian text-gold-100 py-3 rounded-md font-serif text-xs tracking-[0.2em] uppercase transition-all duration-300 hover:bg-gold-dark hover:text-obsidian hover:shadow-lg flex items-center justify-center gap-2 group pointer-events-auto">
+                            <span>Step Inside</span>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- FULL EVENT DETAILS SECTION (Revealed on Open) -->
+        <section id="details-section" class="hidden w-full max-w-4xl mx-auto space-y-24 py-12 opacity-0 translate-y-20 relative z-20">
+            
+            <!-- Hero Card -->
+            <div class="relative rounded-2xl overflow-hidden border border-gold-light/10 bg-gradient-to-b from-space/80 to-obsidian p-8 md:p-16 text-center space-y-8 backdrop-blur-xl shadow-2xl">
+                <span class="text-gold-light text-xs tracking-[0.4em] uppercase flex items-center justify-center gap-2">
+                    <i data-lucide="compass" class="w-4 h-4"></i> The Experience
+                </span>
+                <h2 class="font-serif text-4xl md:text-6xl text-white tracking-wider leading-tight font-bold">Where Stars Align</h2>
+                <div class="w-24 h-[1px] bg-gradient-to-r from-transparent via-gold-light to-transparent mx-auto"></div>
+                <p class="max-w-2xl mx-auto text-stone-300 font-light leading-relaxed text-sm md:text-lg">
+                    This autumn, gather inside the majestic glass domes of the <span class="text-gold-light font-medium">Jardin d'Elysée</span> for a nocturnal renaissance. Explore five curated rooms balancing micro-scenography and macro-architectural projection mapping.
+                </p>
+
+                <!-- Responsive visual element & Countdown -->
+                <div class="relative w-full h-64 md:h-96 rounded-xl overflow-hidden group shadow-2xl">
+                    <div class="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent z-10"></div>
+                    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1200&auto=format&fit=crop" 
+                         alt="Gala Venue Visual" 
+                         class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 filter brightness-75">
+                    
+                    <!-- Countdown HUD -->
+                    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-11/12 max-w-md bg-obsidian/85 backdrop-blur-md rounded-xl p-4 border border-gold-light/20 flex justify-around shadow-2xl">
+                        <div class="text-center">
+                            <span class="block text-2xl md:text-3xl font-serif text-gold-light font-bold" id="days">00</span>
+                            <span class="text-[10px] uppercase text-stone-400 tracking-widest">Days</span>
+                        </div>
+                        <div class="text-center border-l border-white/10 pl-4">
+                            <span class="block text-2xl md:text-3xl font-serif text-gold-light font-bold" id="hours">00</span>
+                            <span class="text-[10px] uppercase text-stone-400 tracking-widest">Hours</span>
+                        </div>
+                        <div class="text-center border-l border-white/10 pl-4">
+                            <span class="block text-2xl md:text-3xl font-serif text-gold-light font-bold" id="minutes">00</span>
+                            <span class="text-[10px] uppercase text-stone-400 tracking-widest">Mins</span>
+                        </div>
+                        <div class="text-center border-l border-white/10 pl-4">
+                            <span class="block text-2xl md:text-3xl font-serif text-gold-light font-bold" id="seconds">00</span>
+                            <span class="text-[10px] uppercase text-stone-400 tracking-widest">Secs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Program Features -->
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="p-8 rounded-xl bg-space/40 border border-gold-light/10 hover:border-gold-light/30 transition-all duration-300 group backdrop-blur-sm">
+                    <div class="w-12 h-12 rounded-full border border-gold-light/30 flex items-center justify-center mb-6 group-hover:bg-gold-light/10 transition-colors">
+                        <i data-lucide="utensils" class="w-5 h-5 text-gold-light"></i>
+                    </div>
+                    <h3 class="font-serif text-xl text-white mb-2 tracking-wide font-semibold">Gastronomy</h3>
+                    <p class="text-stone-400 text-xs leading-relaxed font-light">A 5-course molecular narrative designed by Michelin-starred culinary artists, paired with celestial vintage wines.</p>
+                </div>
+                <div class="p-8 rounded-xl bg-space/40 border border-gold-light/10 hover:border-gold-light/30 transition-all duration-300 group backdrop-blur-sm">
+                    <div class="w-12 h-12 rounded-full border border-gold-light/30 flex items-center justify-center mb-6 group-hover:bg-gold-light/10 transition-colors">
+                        <i data-lucide="music" class="w-5 h-5 text-gold-light"></i>
+                    </div>
+                    <h3 class="font-serif text-xl text-white mb-2 tracking-wide font-semibold">Sonics</h3>
+                    <p class="text-stone-400 text-xs leading-relaxed font-light">A seamless synthesis of live neo-classical orchestral ensembles and ethereal deep ambient electronic rhythms.</p>
+                </div>
+                <div class="p-8 rounded-xl bg-space/40 border border-gold-light/10 hover:border-gold-light/30 transition-all duration-300 group backdrop-blur-sm">
+                    <div class="w-12 h-12 rounded-full border border-gold-light/30 flex items-center justify-center mb-6 group-hover:bg-gold-light/10 transition-colors">
+                        <i data-lucide="shirt" class="w-5 h-5 text-gold-light"></i>
+                    </div>
+                    <h3 class="font-serif text-xl text-white mb-2 tracking-wide font-semibold">Dress Code</h3>
+                    <p class="text-stone-400 text-xs leading-relaxed font-light">Celestial Formal. Velvet, gold-threaded silhouettes, stardust elements, and deep astronomical hues.</p>
+                </div>
+            </div>
+
+            <!-- Interactive RSVP Form Section -->
+            <div class="relative rounded-2xl bg-gradient-to-r from-obsidian to-space p-8 md:p-12 border border-gold-light/20 shadow-2xl">
+                <div class="max-w-xl mx-auto space-y-6 text-center">
+                    <span class="text-xs tracking-[0.3em] uppercase text-gold-light flex items-center justify-center gap-2">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i> Secure Your Presence
+                    </span>
+                    <h2 class="font-serif text-3xl md:text-5xl text-white font-bold">R. S. V. P.</h2>
+                    <p class="text-stone-400 text-xs md:text-sm font-light">Capacity is strictly limited to 1,000 attendees. Kindly confirm your attendance by October 1st.</p>
+                    
+                    <form id="rsvp-form" class="space-y-4 text-left mt-8">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-widest text-stone-400 mb-1" for="firstname">First Name</label>
+                                <input type="text" id="firstname" required placeholder="Aurelia" class="w-full bg-obsidian/80 border border-stone-800 focus:border-gold-light rounded-md p-3 text-stone-100 text-sm outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-widest text-stone-400 mb-1" for="lastname">Last Name</label>
+                                <input type="text" id="lastname" required placeholder="Vane" class="w-full bg-obsidian/80 border border-stone-800 focus:border-gold-light rounded-md p-3 text-stone-100 text-sm outline-none transition-colors">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-widest text-stone-400 mb-1" for="email">Corporate or Personal Email</label>
+                            <input type="email" id="email" required placeholder="aurelia@elysian.org" class="w-full bg-obsidian/80 border border-stone-800 focus:border-gold-light rounded-md p-3 text-stone-100 text-sm outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-widest text-stone-400 mb-1" for="guests">Additional Guests</label>
+                            <select id="guests" class="w-full bg-obsidian/80 border border-stone-800 focus:border-gold-light rounded-md p-3 text-stone-100 text-sm outline-none transition-colors text-stone-300">
+                                <option value="0">Just Me (1 Ticket)</option>
+                                <option value="1">Plus One (+1 Guest Ticket)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-gold-300 to-gold-light text-obsidian font-serif text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-md transition-all duration-300 hover:shadow-[0_0_25px_rgba(212,175,55,0.4)] transform active:scale-[0.99] flex items-center justify-center gap-2">
+                            <span>Confirm Reservation</span>
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Footer -->
+        <footer class="w-full text-center py-8 border-t border-stone-900 mt-16 text-[10px] tracking-widest text-stone-500 uppercase flex flex-col md:flex-row justify-between items-center gap-4 relative z-20">
+            <span>© 2025 ELYSIAN ART FOUNDATION. ALL RIGHTS RESERVED.</span>
+            <span class="flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3 text-gold-dark"></i> DESIGNED FOR SECURE CONCIERGE CHANNELS</span>
+        </footer>
+
+    </main>
+
+    <!-- JS & INTERACTION SCRIPTS -->
+    <script>
+        // Initialize Lenis Smooth Scroll
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            smoothWheel: true
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Canvas Starfield Logic
+        const canvas = document.getElementById('starsCanvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initStars();
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.floor((canvas.width * canvas.height) / 7000);
+            for(let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.5,
+                    opacity: Math.random(),
+                    speed: Math.random() * 0.015 + 0.005
+                });
+            }
+        }
+
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffffff';
+            stars.forEach(star => {
+                ctx.globalAlpha = Math.abs(Math.sin(star.opacity));
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                star.opacity += star.speed;
+                if(star.opacity > Math.PI) star.opacity = 0;
+            });
+            requestAnimationFrame(drawStars);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawStars();
+
+        // Countdown Timer Logic
+        const countdownDate = new Date("Oct 24, 2025 19:00:00").getTime();
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = countdownDate - now;
+
+            if (distance > 0) {
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                document.getElementById("days").innerText = String(days).padStart(2, '0');
+                document.getElementById("hours").innerText = String(hours).padStart(2, '0');
+                document.getElementById("minutes").innerText = String(minutes).padStart(2, '0');
+                document.getElementById("seconds").innerText = String(seconds).padStart(2, '0');
+            } else {
+                document.getElementById("days").innerText = "00";
+                document.getElementById("hours").innerText = "00";
+                document.getElementById("minutes").innerText = "00";
+                document.getElementById("seconds").innerText = "00";
+            }
+        }
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        // Interactive Envelope & Details Sequence
+        const envelopeWrapper = document.getElementById('invite-envelope');
+        const waxSeal = document.getElementById('wax-seal');
+        const viewDetailsBtn = document.getElementById('view-details-btn');
+        const detailsSection = document.getElementById('details-section');
+        const introText = document.getElementById('intro-text');
+
+        let isEnvelopeOpened = false;
+
+        function openEnvelopeSequence() {
+            if (isEnvelopeOpened) return;
+            isEnvelopeOpened = true;
+
+            // Wax seal animation
+            gsap.to(waxSeal, {
+                scale: 0, 
+                opacity: 0, 
+                rotation: 360, 
+                duration: 0.6, 
+                ease: 'power3.inOut'
+            });
+
+            // Trigger Envelope 3D CSS open
+            setTimeout(() => {
+                envelopeWrapper.classList.add('open');
+            }, 250);
+
+            // Haptic Feedback if supported
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(40);
+            }
+        }
+
+        waxSeal.addEventListener('click', openEnvelopeSequence);
+
+        // View Event Details Action
+        viewDetailsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            // Transition main intro text & envelope away smoothly
+            gsap.to([introText, envelopeWrapper], {
+                opacity: 0,
+                y: -80,
+                duration: 0.8,
+                stagger: 0.15,
+                ease: 'power4.inOut',
+                onComplete: () => {
+                    document.getElementById('interactive-invite-section').style.display = 'none';
+                    
+                    // Reveal full details section
+                    detailsSection.classList.remove('hidden');
+                    gsap.to(detailsSection, {
+                        opacity: 1,
+                        y: 0,
+                        duration: 1.2,
+                        ease: 'power3.out',
+                        onComplete: () => {
+                            lenis.resize();
+                        }
+                    });
+                }
+            });
+        });
+
+        // RSVP Form Submission & Confetti Burst
+        const rsvpForm = document.getElementById('rsvp-form');
+        rsvpForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Gold and starry confetti burst
+            confetti({
+                particleCount: 160,
+                spread: 90,
+                origin: { y: 0.6 },
+                colors: ['#D48C2B', '#ECC98C', '#ffffff', '#16192b']
+            });
+
+            const submitBtn = rsvpForm.querySelector('button');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span>RSVP Confirmed</span> <i data-lucide="check" class="w-4 h-4"></i>`;
+            submitBtn.classList.remove('from-gold-300', 'to-gold-light');
+            submitBtn.classList.add('bg-emerald-600', 'text-white');
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
